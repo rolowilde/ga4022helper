@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# Copyright (C) 2025 Rolo Wilde
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+asusctl_bin="${ASUSCTL_BIN:-/usr/bin/asusctl}"
+ppd_bin="${PPD_BIN:-/usr/bin/powerprofilesctl}"
+dbus_bin="${DBUS_BIN:-/usr/bin/dbus-send}"
+machinectl_bin="${MACHINECTL_BIN:/usr/bin/machinectl}"
+gmc_bin="${GNOME_MONITOR_CONFIG_BIN:/usr/bin/gnome_monitor_config}"
+
+config_file="${CONFIG_FILE:-/usr/local/etc/ga4022helper.conf}"
+[[ -f "${config_file}" ]] || { echo "fatal: $config_file not exists." >&2; exit 1; }
+# shellcheck source=./etc/ga4022helper.conf.dist
+source "${config_file}"
+
+ac_online_file=/sys/class/power_supply/AC0/online
+display_brightness_file=/sys/class/backlight/amdgpu_bl2/brightness
+cpu_boost_files=/sys/devices/system/cpu/cpu*/cpufreq/boost
+cpu_epp_files=/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+
+set_display_brightness() { echo $(( ($1 * 255) / 100 )) | tee $display_brightness_file; }
+
+set_keyboard_backlight() { "${asusctl_bin}" -k $1; }
+
+set_ppd() { "${ppd_bin}" set $1; }
+
+set_epp() { echo $1 | tee $cpu_epp_files; }
+
+set_boost() { echo $1 | tee $cpu_boost_files; }
+
+set_platform() {
+    "${dbus_bin}" \
+        --system \
+        --dest=org.asuslinux.Daemon \
+        --print-reply \
+        /org/asuslinux \
+        org.freedesktop.DBus.Properties.Set \
+        string:org.asuslinux.Platform \
+        string:$1 \
+        variant:byte:$2
+}
+
+switch_ac() {
+    [[ -z "${ac_pre_cmd}" ]] || bash -c "${ac_pre_cmd}"
+    set_display_brightness $ac_display_brightness
+    set_keyboard_backlight $ac_keyboard_backlight
+    set_ppd $ac_ppd
+    set_epp $ac_epp
+    set_platform PptApuSppt $ac_apu_sppt
+    set_platform PptPlatformSppt $ac_platform_sppt
+    sleep 1 # wait for ppd
+    set_boost $ac_boost
+    [[ -z "${ac_post_cmd}" ]] || sh -c "${ac_post_cmd}"
+}
+
+switch_bat() {
+    [[ -z "${bat_pre_cmd}" ]] || bash -c "${bat_pre_cmd}"
+    set_display_brightness $bat_display_brightness
+    set_keyboard_backlight $bat_keyboard_backlight
+    set_ppd $bat_ppd
+    set_epp $bat_epp
+    set_platform PptApuSppt $bat_apu_sppt
+    set_platform PptPlatformSppt $bat_platform_sppt
+    sleep 1 # wait for ppd
+    set_boost $bat_boost
+    [[ -z "${bat_post_cmd}" ]] || bash -c "${bat_post_cmd}"
+}
+
+[[ "$(id -u)" == "0" ]] || { echo "fatal: you must be root to run this script." >&2; exit 1; }
+
+_ac_online="$(cat $ac_online_file)"
+if [[ "$_ac_online" == "1" ]]; then
+    switch_ac
+else
+    switch_bat
+fi

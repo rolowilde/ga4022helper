@@ -1,0 +1,22 @@
+# SPPT defaults: platform 115w & apu 65w
+# (performance)boost = 0 (off) | 1 (on)
+
+ac_pre_cmd=
+ac_display_brightness=100
+ac_keyboard_backlight=High
+ac_ppd=balanced
+ac_epp=balance_performance
+ac_boost=0
+ac_apu_sppt=22
+ac_platform_sppt=122
+ac_post_cmd=
+
+bat_pre_cmd=
+bat_display_brightness=50
+bat_keyboard_backlight=Off
+bat_ppd=power-saver
+bat_epp=power
+bat_boost=0
+bat_apu_sppt=12
+bat_platform_sppt=22
+bat_post_cmd=
