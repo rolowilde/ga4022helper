@@ -18,8 +18,6 @@
 asusctl_bin="${ASUSCTL_BIN:-/usr/bin/asusctl}"
 ppd_bin="${PPD_BIN:-/usr/bin/powerprofilesctl}"
 dbus_bin="${DBUS_BIN:-/usr/bin/dbus-send}"
-machinectl_bin="${MACHINECTL_BIN:/usr/bin/machinectl}"
-gmc_bin="${GNOME_MONITOR_CONFIG_BIN:/usr/bin/gnome_monitor_config}"
 
 config_file="${CONFIG_FILE:-/usr/local/etc/ga4022helper.conf}"
 [[ -f "${config_file}" ]] || { echo "fatal: $config_file not exists." >&2; exit 1; }
@@ -55,27 +53,27 @@ set_platform() {
 
 switch_ac() {
     [[ -z "${ac_pre_cmd}" ]] || bash -c "${ac_pre_cmd}"
-    set_display_brightness $ac_display_brightness
-    set_keyboard_backlight $ac_keyboard_backlight
-    set_ppd $ac_ppd
-    set_epp $ac_epp
-    set_platform PptApuSppt $ac_apu_sppt
-    set_platform PptPlatformSppt $ac_platform_sppt
+    [[ -z "${ac_display_brightness}" ]] || set_display_brightness $ac_display_brightness
+    [[ -z "${ac_keyboard_backlight}" ]] || set_keyboard_backlight $ac_keyboard_backlight
+    [[ -z "${ac_ppd}" ]] || set_ppd $ac_ppd
+    [[ -z "${ac_epp}" ]] || set_epp $ac_epp
+    [[ -z "${ac_apu_sppt}" ]] || set_platform PptApuSppt $ac_apu_sppt
+    [[ -z "${ac_platform_sppt}" ]] || set_platform PptPlatformSppt $ac_platform_sppt
     sleep 1 # wait for ppd
-    set_boost $ac_boost
+    [[ -z "${ac_boost}" ]] || set_boost $ac_boost
     [[ -z "${ac_post_cmd}" ]] || sh -c "${ac_post_cmd}"
 }
 
 switch_bat() {
     [[ -z "${bat_pre_cmd}" ]] || bash -c "${bat_pre_cmd}"
-    set_display_brightness $bat_display_brightness
-    set_keyboard_backlight $bat_keyboard_backlight
-    set_ppd $bat_ppd
-    set_epp $bat_epp
-    set_platform PptApuSppt $bat_apu_sppt
-    set_platform PptPlatformSppt $bat_platform_sppt
+    [[ -z "${bat_display_brightness}" ]] || set_display_brightness $bat_display_brightness
+    [[ -z "${bat_keyboard_backlight}" ]] || set_keyboard_backlight $bat_keyboard_backlight
+    [[ -z "${bat_ppd}" ]] || set_ppd $bat_ppd
+    [[ -z "${bat_epp}" ]] || set_epp $bat_epp
+    [[ -z "${bat_apu_sppt}" ]] || set_platform PptApuSppt $bat_apu_sppt
+    [[ -z "${bat_platform_sppt}" ]] || set_platform PptPlatformSppt $bat_platform_sppt
     sleep 1 # wait for ppd
-    set_boost $bat_boost
+    [[ -z "${bat_boost}" ]] || set_boost $bat_boost
     [[ -z "${bat_post_cmd}" ]] || bash -c "${bat_post_cmd}"
 }
 
